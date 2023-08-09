@@ -14,7 +14,9 @@ fi
 
 # Checking Magisk Busybox
 if [ -z "$INSTFN" ] && [ "$BOOTSTAGE" != "post" -a "$BOOTSTAGE" != "late" ]; then
-	BBPATH=$ADBPATH/magisk/busybox
+	for BBPATH in $ADBPATH/ksu/bin/busybox $ADBPATH/magisk/busybox; do
+		[ -f "$BBPATH" ] && break
+	done
 	if [ -f "$BBPATH" ]; then
 		for ITEM in $($BBPATH --list | tail -n +3); do
 			alias $ITEM="$BBPATH $ITEM"
@@ -161,14 +163,19 @@ else
 	"
 fi
 
-TMPFSMOUNT=$(magisk --path)
+TMPFSMOUNT=$(command -v magisk >/dev/null && magisk --path ||:)
 MIRRORPATH=$TMPFSMOUNT/.magisk/mirror
 SYSTEMFILE=$MODPATH/system.prop
 RUNFILE=$MHPCPATH/script_check
 UPDATECHECK=""
+
 # Make sure that the terminal app used actually can see resetprop
 if [ "$BOOTSTAGE" == "props" ]; then
-	alias resetprop="$ADBPATH/magisk/magisk resetprop"
+	if [ -e "$ADBPATH/ksu" ]; then
+		alias resetprop="$ADBPATH/ksu/bin/resetprop"
+	elif [ -e "$ADBPATH/magisk" ]; then
+		alias resetprop="$ADBPATH/magisk/magisk resetprop"
+	fi
 fi
 
 # Fingerprint variables
@@ -266,6 +273,10 @@ system_ext
 # Additional fingerprint prop parts
 PRINTPROPSPARTS="
 bootimage
+oem
+system_dlkm
+vendor_dlkm
+odm_dlkm
 "
 
 # Print parts
@@ -1001,6 +1012,7 @@ config_file() {
 
 # Connection test
 test_connection() {
+	[ -z "${NONETTEST}" ] || return
 	case $1 in
 		*nw*) # Don't run if the -nw run option is used.
 		;;

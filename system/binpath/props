@@ -1,5 +1,7 @@
 #!/system/bin/sh
 
+[ "$(id -u)" = 0 ] || { echo "Must be ran as root."; exit 1; }
+
 # MagiskHide Props Config
 # Copyright (c) 2018-2021 Didgeridoohan @ XDA Developers
 # Licence: MIT
@@ -118,17 +120,6 @@ if [ "$(get_file_value $MODPATH/module.prop "settingsVersion=")" != "$SCRIPTV" ]
 	echo -n "Press enter to continue..."
 	read -r INPUTTMP
 	reset_fn "Settings version mismatch" "mismatch" "noreboot"
-fi
-
-# Check MagiskHide status
-if [ "$(magisk -V)" -ge 23010 ]; then
-	MHTEMP=$(magisk --denylist status) >> $LOGFILE 2>&1
-	MHLST=$(magisk --denylist ls)
-	for ITEM in $MHLST; do
-		echo $ITEM >> $LOGFILE 2>&1
-	done
-else
-	MHTEMP=$(magiskhide status) >> $LOGFILE 2>&1
 fi
 
 blank_input() {
@@ -278,12 +269,6 @@ menu_change_fingerprint() {
 				echo ""
 				echo "Enter the new fingerprint or"
 				echo "pick from the options below."
-				echo ""
-				if [ "$(magisk -V)" -ge 23010 ]; then
-					$(magisk --denylist status)
-				else
-					$(magiskhide status)
-				fi
 				echo ""
 				echo -e "${G}f${N} - Pick a certified fingerprint"
 				if [ "$PRINTMODULETXT" ]; then
